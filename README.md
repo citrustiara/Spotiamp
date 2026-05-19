@@ -11,6 +11,25 @@ Check [releases](https://github.com/tedsteen/Spotiamp/releases/) for MacOS and W
   <img src="playlist.png" alt="Playlist"/>
 </p>
 
+## Skins
+
+Spotiamp supports Winamp Classic skins. You can find many skins at
+[skins.webamp.org](https://skins.webamp.org/).
+
+Downloaded skins often use the `.wsz` extension. If you need to inspect or import
+one manually, rename it to `.zip` and extract it first.
+
+To add a skin from the app:
+
+1. Click the small skin button in the top-left of the player titlebar.
+2. Click `Import`.
+3. Choose the extracted skin folder.
+4. Select the skin from the dropdown.
+
+You can also add skins by copying extracted skin folders into the app's skins
+folder. The app scans that folder automatically and keeps the selected skin in
+settings.
+
 ## Building and running
 ```bash
 # Install all
