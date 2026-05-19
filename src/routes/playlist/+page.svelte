@@ -215,7 +215,7 @@
   }
 
   .draggable-corner {
-    cursor: url(/src/static/assets/skins/base-2.91/TITLEBAR.CUR), default;
+    cursor: var(--skin-titlebar-cur, url(/src/static/assets/skins/base-2.91/TITLEBAR.CUR)), default;
     --width: 15px;
     --height: 15px;
     width: calc(var(--width) * var(--zoom));
@@ -253,7 +253,7 @@
   }
 
   input.scroll-bar {
-    cursor: url(/src/static/assets/skins/base-2.91/EQSLID.CUR), default;
+    cursor: var(--skin-eqslid-cur, url(/src/static/assets/skins/base-2.91/EQSLID.CUR)), default;
     --track-row-height: 14.5px;
     writing-mode: vertical-lr;
     direction: ltr;
@@ -274,7 +274,7 @@
   }
 
   input.scroll-bar::-webkit-slider-thumb {
-    background: url(/src/static/assets/skins/base-2.91/PLEDIT.BMP);
+    background: var(--skin-pledit-bmp, url(/src/static/assets/skins/base-2.91/PLEDIT.BMP));
     appearance: none;
     width: 8px;
     height: 18px;
@@ -342,15 +342,15 @@
   }
 
   .playlist-tl-sprite {
-    cursor: url(/src/static/assets/skins/base-2.91/TITLEBAR.CUR), default;
-    --sprite-url: url(/src/static/assets/skins/base-2.91/PLEDIT.BMP);
+    cursor: var(--skin-titlebar-cur, url(/src/static/assets/skins/base-2.91/TITLEBAR.CUR)), default;
+    --sprite-url: var(--skin-pledit-bmp, url(/src/static/assets/skins/base-2.91/PLEDIT.BMP));
     width: 25px;
     height: 20px;
   }
 
   .playlist-t-sprite {
-    cursor: url(/src/static/assets/skins/base-2.91/TITLEBAR.CUR), default;
-    --sprite-url: url(/src/static/assets/skins/base-2.91/PLEDIT.BMP);
+    cursor: var(--skin-titlebar-cur, url(/src/static/assets/skins/base-2.91/TITLEBAR.CUR)), default;
+    --sprite-url: var(--skin-pledit-bmp, url(/src/static/assets/skins/base-2.91/PLEDIT.BMP));
     width: 25px;
     height: 20px;
     --y: 0;
@@ -359,8 +359,8 @@
   }
 
   .playlist-title-sprite {
-    cursor: url(/src/static/assets/skins/base-2.91/TITLEBAR.CUR), default;
-    --sprite-url: url(/src/static/assets/skins/base-2.91/PLEDIT.BMP);
+    cursor: var(--skin-titlebar-cur, url(/src/static/assets/skins/base-2.91/TITLEBAR.CUR)), default;
+    --sprite-url: var(--skin-pledit-bmp, url(/src/static/assets/skins/base-2.91/PLEDIT.BMP));
     width: 100px;
     height: 20px;
     --y: 0;
@@ -369,7 +369,7 @@
   }
 
   .playlist-tr-sprite {
-    --sprite-url: url(/src/static/assets/skins/base-2.91/PLEDIT.BMP);
+    --sprite-url: var(--skin-pledit-bmp, url(/src/static/assets/skins/base-2.91/PLEDIT.BMP));
     width: 25px;
     height: 20px;
     --x: var(--playlist-w);
@@ -379,7 +379,7 @@
   }
 
   .playlist-l-sprite {
-    --sprite-url: url(/src/static/assets/skins/base-2.91/PLEDIT.BMP);
+    --sprite-url: var(--skin-pledit-bmp, url(/src/static/assets/skins/base-2.91/PLEDIT.BMP));
     width: 10px;
     height: 29px;
     --sprite-y: calc(var(--y) * 29px - 9px);
@@ -387,7 +387,7 @@
   }
 
   .playlist-r-sprite {
-    --sprite-url: url(/src/static/assets/skins/base-2.91/PLEDIT.BMP);
+    --sprite-url: var(--skin-pledit-bmp, url(/src/static/assets/skins/base-2.91/PLEDIT.BMP));
     width: 19px;
     height: 29px;
     --x: var(--playlist-w);
@@ -397,7 +397,7 @@
   }
 
   .playlist-bl-sprite {
-    --sprite-url: url(/src/static/assets/skins/base-2.91/PLEDIT.BMP);
+    --sprite-url: var(--skin-pledit-bmp, url(/src/static/assets/skins/base-2.91/PLEDIT.BMP));
     width: 125px;
     height: 38px;
     --y: var(--playlist-h);
@@ -406,7 +406,7 @@
   }
 
   .playlist-b-sprite {
-    --sprite-url: url(/src/static/assets/skins/base-2.91/PLEDIT.BMP);
+    --sprite-url: var(--skin-pledit-bmp, url(/src/static/assets/skins/base-2.91/PLEDIT.BMP));
     width: 25px;
     height: 38px;
     --y: var(--playlist-h);
@@ -416,7 +416,7 @@
   }
 
   .playlist-br-sprite {
-    --sprite-url: url(/src/static/assets/skins/base-2.91/PLEDIT.BMP);
+    --sprite-url: var(--skin-pledit-bmp, url(/src/static/assets/skins/base-2.91/PLEDIT.BMP));
     width: 150px;
     height: 38px;
     --x: var(--playlist-w);

@@ -12,6 +12,7 @@ mod player_window;
 mod playlist_window;
 mod settings;
 mod sink;
+mod skins;
 pub mod spotify;
 mod visualizer;
 
@@ -143,6 +144,9 @@ pub fn run() {
             playlist_window::get_playlist_settings,
             playlist_window::add_uri,
             playlist_window::set_playlist_inner_size,
+            skins::get_skin_library,
+            skins::set_current_skin,
+            skins::import_skin_folder,
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();

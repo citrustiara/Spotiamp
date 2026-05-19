@@ -117,9 +117,7 @@
     xShift = 0;
   });
 
-  /**
-   * @type {number | undefined}
-   */
+  /** @type {ReturnType<typeof setInterval> | undefined} */
   let ticker;
   $effect(() => {
     clearInterval(ticker);
@@ -167,7 +165,7 @@
   }
 
   .letter-sprite {
-    --sprite-url: url(/src/static/assets/skins/base-2.91/TEXT.BMP);
+    --sprite-url: var(--skin-text-bmp, url(/src/static/assets/skins/base-2.91/TEXT.BMP));
     width: 5px;
     height: 6px;
     background-position: calc(-5px * var(--letter-idx-col))

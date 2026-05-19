@@ -11,8 +11,8 @@ use crate::{
 };
 use librespot::{
     core::{
-        Error, authentication::Credentials, cache::Cache, config::SessionConfig, session::Session,
-        spotify_id::SpotifyId,
+        Error, SpotifyUri, authentication::Credentials, cache::Cache, config::SessionConfig,
+        session::Session,
     },
     metadata::{Album, Metadata, Playlist, Track},
     playback::{
@@ -142,6 +142,7 @@ impl SpotifyPlayer {
             normalisation_knee_db: 5.0,
             passthrough: false,
             ditherer: Some(mk_ditherer::<TriangularDitherer>),
+            local_file_directories: Vec::new(),
         };
 
         struct SpotiampVolumeGetter {
@@ -182,7 +183,9 @@ impl SpotifyPlayer {
 
     pub async fn load_track(&self, uri: &str) -> Result<(), PlayError> {
         self.player.load(
-            SpotifyId::from_uri(uri).map_err(|e| PlayError::MetadataError { e })?,
+            // librespot 0.8 fixes "Track should be available, but no alternatives found":
+            // https://github.com/librespot-org/librespot/issues/1623
+            SpotifyUri::from_uri(uri).map_err(|e| PlayError::MetadataError { e })?,
             true,
             0,
         );
@@ -206,35 +209,27 @@ impl SpotifyPlayer {
         Ok(())
     }
 
-    pub async fn get_track_ids(&self, playlist_id: SpotifyId) -> Result<Vec<SpotifyId>, PlayError> {
-        match playlist_id.item_type {
-            librespot::core::spotify_id::SpotifyItemType::Playlist => {
-                Ok(Playlist::get(&self.session.inner, &playlist_id)
-                    .await
-                    .map_err(|e| PlayError::MetadataError { e })?
-                    .contents
-                    .items
-                    .iter()
-                    .filter(|item| {
-                        let is_track = matches!(
-                            &item.id.item_type,
-                            librespot::core::spotify_id::SpotifyItemType::Track
-                        );
-
-                        is_track
-                    })
-                    .map(|item| &item.id)
-                    .cloned()
-                    .collect())
-            }
-            librespot::core::spotify_id::SpotifyItemType::Album => {
-                Ok(Album::get(&self.session.inner, &playlist_id)
-                    .await
-                    .map_err(|e| PlayError::MetadataError { e })?
-                    .tracks()
-                    .cloned()
-                    .collect())
-            }
+    pub async fn get_track_ids(
+        &self,
+        playlist_id: SpotifyUri,
+    ) -> Result<Vec<SpotifyUri>, PlayError> {
+        match playlist_id {
+            SpotifyUri::Playlist { .. } => Ok(Playlist::get(&self.session.inner, &playlist_id)
+                .await
+                .map_err(|e| PlayError::MetadataError { e })?
+                .contents
+                .items
+                .iter()
+                .filter(|item| matches!(item.id, SpotifyUri::Track { .. }))
+                .map(|item| &item.id)
+                .cloned()
+                .collect()),
+            SpotifyUri::Album { .. } => Ok(Album::get(&self.session.inner, &playlist_id)
+                .await
+                .map_err(|e| PlayError::MetadataError { e })?
+                .tracks()
+                .cloned()
+                .collect()),
             _ => {
                 log::warn!("Trying to get playlist tracks from an id that is not a playlist");
                 Ok(vec![])
@@ -242,16 +237,16 @@ impl SpotifyPlayer {
         }
     }
 
-    pub async fn get_track(&mut self, track_id: SpotifyId) -> Result<Track, PlayError> {
-        match track_id.item_type {
-            librespot::core::spotify_id::SpotifyItemType::Track => {
+    pub async fn get_track(&mut self, track_id: SpotifyUri) -> Result<Track, PlayError> {
+        match track_id {
+            SpotifyUri::Track { .. } => {
                 log::debug!("Getting track data: {:?}", track_id);
                 //TODO: Check why we get `TrackMetadataError { e: Error { kind: Internal, error: ErrorMessage("channel closed") } }` here after leaving the mac in standby for a while.
                 Track::get(&self.session.inner, &track_id)
                     .await
                     .map_err(|e| PlayError::MetadataError { e })
             }
-            _ => Err(PlayError::GettingTrackForNonTrackId(track_id)),
+            _ => Err(PlayError::GettingTrackForNonTrackUri(track_id)),
         }
     }
 
@@ -298,5 +293,5 @@ pub enum PlayError {
     #[error("Failed to fetch metadata ({e:?})")]
     MetadataError { e: Error },
     #[error("Cannot get track for non track id ({_0:?})")]
-    GettingTrackForNonTrackId(SpotifyId),
+    GettingTrackForNonTrackUri(SpotifyUri),
 }

@@ -114,6 +114,19 @@ pub struct PlaylistSettings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Hash)]
+pub struct SkinSettings {
+    pub current_skin_id: String,
+}
+
+impl Default for SkinSettings {
+    fn default() -> Self {
+        Self {
+            current_skin_id: "base-2.91".to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Hash)]
 pub struct PlayerSettings {
     pub window_state: WindowState,
     pub double_size_active: bool,
@@ -134,8 +147,12 @@ impl Default for PlayerSettings {
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Hash)]
 pub struct Settings {
+    #[serde(default)]
     pub player: PlayerSettings,
+    #[serde(default)]
     pub playlist: PlaylistSettings,
+    #[serde(default)]
+    pub skin: SkinSettings,
 }
 
 impl Settings {

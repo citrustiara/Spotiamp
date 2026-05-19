@@ -1,5 +1,6 @@
 <script>
   import { invoke } from "@tauri-apps/api/core";
+  import { open } from "@tauri-apps/plugin-dialog";
 
   import {
     durationToMMSS,
@@ -16,6 +17,7 @@
   import { onMount } from "svelte";
   import { Visualizer } from "$lib/visualizer.svelte";
   import { getCurrentWindow } from "@tauri-apps/api/window";
+  import { SKIN_LIBRARY } from "$lib/skins.svelte.js";
 
   /** @type {{data: import('./$types').PageData}} */
   const { data: playerSettings } = $props();
@@ -38,6 +40,7 @@
    */
   let playerState = $state("stopped");
   let numberDisplayHidden = $state(true);
+  let skinPanelOpen = $state(false);
 
   const currentTime = $derived(durationToMMSS(seekPosition));
   const tickerOverrideText = $derived.by(() => {
@@ -89,6 +92,37 @@
     seekPosition = sliderSeekPosition = 0;
     playerState = "stopped"; // To make the UI a bit snappier
     await invoke("stop").catch(handleError);
+  }
+
+  async function importSkinFolder() {
+    const selected = await open({
+      directory: true,
+      multiple: false,
+      title: "Import Winamp skin folder",
+    });
+
+    if (typeof selected == "string") {
+      const library = await invoke("import_skin_folder", {
+        sourceDir: selected,
+      }).catch(handleError);
+      if (library) {
+        SKIN_LIBRARY.setLibrary(/** @type {any} */ (library));
+      }
+    }
+  }
+
+  /**
+   * @param {Event} event
+   */
+  async function selectSkin(event) {
+    if (event.target instanceof HTMLSelectElement) {
+      const library = await invoke("set_current_skin", {
+        id: event.target.value,
+      }).catch(handleError);
+      if (library) {
+        SKIN_LIBRARY.setLibrary(/** @type {any} */ (library));
+      }
+    }
   }
 
   /**
@@ -216,6 +250,26 @@
     class="sprite titlebar-sprite"
     id="titlebar"
   ></div>
+
+  <button
+    class="sprite skin-menu-btn"
+    onclick={() => (skinPanelOpen = !skinPanelOpen)}
+    aria-label="Skins"
+  ></button>
+  {#if skinPanelOpen}
+    <div class="skin-panel">
+      <select
+        aria-label="Select skin"
+        value={SKIN_LIBRARY.currentSkinId}
+        onchange={selectSkin}
+      >
+        {#each SKIN_LIBRARY.skins as skin}
+          <option value={skin.id}>{skin.name}</option>
+        {/each}
+      </select>
+      <button type="button" onclick={importSkinFolder}>Import</button>
+    </div>
+  {/if}
 
   <button
     class="sprite close-btn"
@@ -360,8 +414,8 @@
 
 <style>
   button.close-btn {
-    cursor: url(/src/static/assets/skins/base-2.91/CLOSE.CUR), default;
-    --sprite-url: url(/src/static/assets/skins/base-2.91/TITLEBAR.BMP);
+    cursor: var(--skin-close-cur, url(/src/static/assets/skins/base-2.91/CLOSE.CUR)), default;
+    --sprite-url: var(--skin-titlebar-bmp, url(/src/static/assets/skins/base-2.91/TITLEBAR.BMP));
     --sprite-x: 264px;
     --sprite-y: 3px;
     width: 9px;
@@ -374,8 +428,8 @@
   }
 
   button.minimize-btn {
-    cursor: url(/src/static/assets/skins/base-2.91/MAINMENU.CUR), auto;
-    --sprite-url: url(/src/static/assets/skins/base-2.91/TITLEBAR.BMP);
+    cursor: var(--skin-mainmenu-cur, url(/src/static/assets/skins/base-2.91/MAINMENU.CUR)), auto;
+    --sprite-url: var(--skin-titlebar-bmp, url(/src/static/assets/skins/base-2.91/TITLEBAR.BMP));
     --sprite-x: 244px;
     --sprite-y: 3px;
     width: 9px;
@@ -388,7 +442,7 @@
   }
 
   .side-buttons {
-    --sprite-url: url(/src/static/assets/skins/base-2.91/TITLEBAR.BMP);
+    --sprite-url: var(--skin-titlebar-bmp, url(/src/static/assets/skins/base-2.91/TITLEBAR.BMP));
     --sprite-x: 10px;
     --sprite-y: 22px;
     width: 8px;
@@ -397,7 +451,7 @@
   }
 
   button.double-size-btn {
-    --sprite-url: url(/src/static/assets/skins/base-2.91/TITLEBAR.BMP);
+    --sprite-url: var(--skin-titlebar-bmp, url(/src/static/assets/skins/base-2.91/TITLEBAR.BMP));
     --sprite-x: 10px;
     --sprite-y: 48px;
     width: 8px;
@@ -410,7 +464,7 @@
   }
 
   button.playlist-btn {
-    --sprite-url: url(/src/static/assets/skins/base-2.91/SHUFREP.BMP);
+    --sprite-url: var(--skin-shufrep-bmp, url(/src/static/assets/skins/base-2.91/SHUFREP.BMP));
     --sprite-x: 242px;
     --sprite-y: 58px;
     width: 23px;
@@ -426,7 +480,7 @@
   }
 
   .stereo-mono-sprite {
-    --sprite-url: url(/src/static/assets/skins/base-2.91/MONOSTER.BMP);
+    --sprite-url: var(--skin-monoster-bmp, url(/src/static/assets/skins/base-2.91/MONOSTER.BMP));
     --sprite-y: 41px;
     height: 12px;
   }
@@ -449,7 +503,7 @@
 
   /* ------ SEEK POSITION ------ */
   .seek-position-sprite {
-    --sprite-url: url(/src/static/assets/skins/base-2.91/POSBAR.BMP);
+    --sprite-url: var(--skin-posbar-bmp, url(/src/static/assets/skins/base-2.91/POSBAR.BMP));
     --sprite-x: 16px;
     --sprite-y: 72px;
     width: 249px;
@@ -459,11 +513,11 @@
 
   #seek-position {
     appearance: none;
-    cursor: url(/src/static/assets/skins/base-2.91/VOLBAL.CUR), default;
+    cursor: var(--skin-volbal-cur, url(/src/static/assets/skins/base-2.91/VOLBAL.CUR)), default;
   }
 
   #seek-position::-webkit-slider-thumb {
-    background: url(/src/static/assets/skins/base-2.91/POSBAR.BMP);
+    background: var(--skin-posbar-bmp, url(/src/static/assets/skins/base-2.91/POSBAR.BMP));
     appearance: none;
     width: 28px;
     height: 11px;
@@ -522,19 +576,54 @@
   /* ------ /VISUALIZER ------ */
 
   /* ------ TITLEBAR ------ */
+  button.skin-menu-btn {
+    --sprite-url: var(--skin-titlebar-bmp, url(/src/static/assets/skins/base-2.91/TITLEBAR.BMP));
+    --sprite-x: 6px;
+    --sprite-y: 3px;
+    width: 9px;
+    height: 9px;
+    background-position: 0px 0px;
+  }
+
+  .skin-panel {
+    position: absolute;
+    z-index: 20;
+    left: calc(6px * var(--zoom));
+    top: calc(14px * var(--zoom));
+    width: calc(168px * var(--zoom));
+    padding: calc(4px * var(--zoom));
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: calc(4px * var(--zoom));
+    background: rgb(24, 24, 24);
+    border: calc(1px * var(--zoom)) solid rgb(168, 168, 168);
+    box-shadow: calc(1px * var(--zoom)) calc(1px * var(--zoom)) 0 black;
+  }
+
+  .skin-panel select,
+  .skin-panel button {
+    min-width: 0;
+    height: calc(18px * var(--zoom));
+    padding: 0 calc(4px * var(--zoom));
+    background: rgb(224, 224, 224);
+    color: black;
+    font-family: Arial, sans-serif;
+    font-size: calc(10px * var(--zoom));
+  }
+
   .titlebar-sprite {
-    --sprite-url: url(/src/static/assets/skins/base-2.91/TITLEBAR.BMP);
+    --sprite-url: var(--skin-titlebar-bmp, url(/src/static/assets/skins/base-2.91/TITLEBAR.BMP));
     width: 275px;
     height: 14px;
     background-position: -27px 0px;
-    cursor: url(/src/static/assets/skins/base-2.91/TITLEBAR.CUR), default;
+    cursor: var(--skin-titlebar-cur, url(/src/static/assets/skins/base-2.91/TITLEBAR.CUR)), default;
   }
 
   /* ------ /TITLEBAR ------ */
 
   /* ------ MAIN ------ */
   .main-sprite {
-    --sprite-url: url(/src/static/assets/skins/base-2.91/MAIN.BMP);
+    --sprite-url: var(--skin-main-bmp, url(/src/static/assets/skins/base-2.91/MAIN.BMP));
     width: 275px;
     height: 116px;
     background-position: 0px 0px;
@@ -544,7 +633,7 @@
 
   /* ------ PLAYPAUSE ------ */
   .playpause-sprite {
-    --sprite-url: url(/src/static/assets/skins/base-2.91/PLAYPAUS.BMP);
+    --sprite-url: var(--skin-playpaus-bmp, url(/src/static/assets/skins/base-2.91/PLAYPAUS.BMP));
     width: 9px;
     height: 9px;
     --sprite-x: 26px;
@@ -567,7 +656,7 @@
 
   /* ------ VOLUME ------ */
   .volume-sprite {
-    --sprite-url: url(/src/static/assets/skins/base-2.91/VOLUME.BMP);
+    --sprite-url: var(--skin-volume-bmp, url(/src/static/assets/skins/base-2.91/VOLUME.BMP));
     --sprite-x: 107px;
     --sprite-y: 57px;
     width: 65px;
@@ -577,14 +666,14 @@
 
   #volume {
     appearance: none;
-    cursor: url(/src/static/assets/skins/base-2.91/VOLBAL.CUR), default;
+    cursor: var(--skin-volbal-cur, url(/src/static/assets/skins/base-2.91/VOLBAL.CUR)), default;
     background-position-y: calc(
       round(down, var(--volume) / 100 * 27, 1) * -15px
     );
   }
 
   #volume::-webkit-slider-thumb {
-    background: url(/src/static/assets/skins/base-2.91/VOLUME.BMP);
+    background: var(--skin-volume-bmp, url(/src/static/assets/skins/base-2.91/VOLUME.BMP));
     appearance: none;
     width: 14px;
     height: 11px;
@@ -600,7 +689,7 @@
 
   /* ------ CBUTTONS ------ */
   .control-buttons-sprite {
-    --sprite-url: url(/src/static/assets/skins/base-2.91/CBUTTONS.BMP);
+    --sprite-url: var(--skin-cbuttons-bmp, url(/src/static/assets/skins/base-2.91/CBUTTONS.BMP));
     --button-width: 23px;
     --button-height: 18px;
     --button-state: 0;
