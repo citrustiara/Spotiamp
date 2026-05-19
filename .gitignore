@@ -4,6 +4,7 @@ node_modules
 /.svelte-kit
 /package
 /skins/*
+!/skins/.gitkeep
 .env
 .env.*
 !.env.example
