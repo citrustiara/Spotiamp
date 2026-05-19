@@ -127,6 +127,25 @@ impl Default for SkinSettings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Hash)]
+pub struct ShortcutSettings {
+    pub play_pause: Option<String>,
+    pub stop: Option<String>,
+    pub next: Option<String>,
+    pub previous: Option<String>,
+}
+
+impl Default for ShortcutSettings {
+    fn default() -> Self {
+        Self {
+            play_pause: Some("MediaPlayPause".to_string()),
+            stop: Some("MediaStop".to_string()),
+            next: Some("MediaTrackNext".to_string()),
+            previous: Some("MediaTrackPrevious".to_string()),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Hash)]
 pub struct PlayerSettings {
     pub window_state: WindowState,
     pub double_size_active: bool,
@@ -153,6 +172,8 @@ pub struct Settings {
     pub playlist: PlaylistSettings,
     #[serde(default)]
     pub skin: SkinSettings,
+    #[serde(default)]
+    pub shortcuts: ShortcutSettings,
 }
 
 impl Settings {
@@ -188,6 +209,7 @@ impl Settings {
             log::info!("Could not load a settings file ({e:?}, creating a new one");
             let mut new_settings = Settings::default();
             new_settings.playlist.uris = vec!["spotify:track:0DiWol3AO6WpXZgp0goxAV".to_string()];
+            new_settings.save();
             new_settings
         })
     }

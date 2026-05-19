@@ -30,6 +30,25 @@ You can also add skins by copying extracted skin folders into the app's skins
 folder. The app scans that folder automatically and keeps the selected skin in
 settings.
 
+## Media shortcuts
+
+Global media shortcuts are configured in `settings.yaml` under `shortcuts`.
+Spotiamp creates the settings file on first launch. The config directory is
+platform-specific; the startup log prints the exact `settings.yaml` path.
+
+Default bindings:
+
+```yaml
+shortcuts:
+  play_pause: MediaPlayPause
+  stop: MediaStop
+  next: MediaTrackNext
+  previous: MediaTrackPrevious
+```
+
+Use global-hotkey/Tauri shortcut names such as `Control+Alt+KeyP` or
+`Shift+MediaTrackNext`. Set a binding to `null` to disable it.
+
 ## Building and running
 ```bash
 # Install all

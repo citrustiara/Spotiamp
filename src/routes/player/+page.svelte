@@ -94,6 +94,14 @@
     await invoke("stop").catch(handleError);
   }
 
+  async function togglePlayPause() {
+    if (playerState == "playing") {
+      await pause();
+    } else {
+      await play();
+    }
+  }
+
   async function importSkinFolder() {
     const selected = await open({
       directory: true,
@@ -214,6 +222,17 @@
       }
     );
 
+    const playerWindowEventSubscription = subscribeToWindowEvent(
+      "playerWindow",
+      (event) => {
+        if (event.PlayPausePressed !== undefined) {
+          togglePlayPause();
+        } else if (event.StopPressed !== undefined) {
+          stop();
+        }
+      }
+    );
+
     const cleanupDropHandler = handleDrop((urls) => {
       emitWindowEvent("playerWindow", { UrlsDropped: urls });
     });
@@ -221,6 +240,7 @@
     return () => {
       clearInterval(tickerInterval);
       playerEventsSubscription.then((unlisten) => unlisten());
+      playerWindowEventSubscription.then((unlisten) => unlisten());
       playlistWindowEventSubscription.then((unlisten) => unlisten());
       cleanupDropHandler();
     };

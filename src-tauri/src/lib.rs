@@ -1,12 +1,14 @@
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 
 use librespot::playback::player::PlayerEvent;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use spotify::{SessionError, SpotifyPlayer};
 use tauri::{AppHandle, Emitter, Listener, Manager};
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 use thiserror::Error;
 
-use crate::spotify::SpotifySession;
+use crate::{settings::Settings, spotify::SpotifySession};
 mod oauth;
 mod player_window;
 mod playlist_window;
@@ -40,9 +42,13 @@ enum SpotiampPlayerEvent {
     Playing { uri: String, position_ms: u32 },
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Deserialize, Serialize)]
 enum PlayerWindowEvent {
     CloseRequested,
+    PlayPausePressed,
+    StopPressed,
+    NextPressed,
+    PreviousPressed,
 }
 
 #[derive(Clone, Deserialize)]
@@ -123,9 +129,60 @@ async fn start_app(app_handle: &AppHandle) -> Result<(), StartError> {
     Ok(())
 }
 
+fn register_media_shortcuts(app_handle: &AppHandle) {
+    let shortcut_settings = Settings::current().shortcuts.clone();
+    let shortcuts = [
+        (
+            "play_pause",
+            shortcut_settings.play_pause,
+            json!({ "PlayPausePressed": null }),
+        ),
+        (
+            "stop",
+            shortcut_settings.stop,
+            json!({ "StopPressed": null }),
+        ),
+        (
+            "next",
+            shortcut_settings.next,
+            json!({ "NextPressed": null }),
+        ),
+        (
+            "previous",
+            shortcut_settings.previous,
+            json!({ "PreviousPressed": null }),
+        ),
+    ];
+
+    for (name, shortcut, player_event) in shortcuts {
+        let Some(shortcut) = shortcut else {
+            log::debug!("Media shortcut '{name}' is disabled");
+            continue;
+        };
+
+        let Ok(shortcut) = Shortcut::from_str(&shortcut) else {
+            log::warn!("Could not parse media shortcut '{name}': '{shortcut}'");
+            continue;
+        };
+
+        let event = player_event.clone();
+        if let Err(e) = app_handle.global_shortcut().on_shortcut(
+            shortcut,
+            move |app, _shortcut, shortcut_event| {
+                if shortcut_event.state == ShortcutState::Pressed {
+                    let _ = app.emit("playerWindow", event.clone());
+                }
+            },
+        ) {
+            log::warn!("Could not register media shortcut '{name}': {:?}", e);
+        };
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
@@ -156,6 +213,10 @@ pub fn run() {
                         PlayerWindowEvent::CloseRequested => {
                             std::process::exit(0);
                         }
+                        PlayerWindowEvent::PlayPausePressed
+                        | PlayerWindowEvent::StopPressed
+                        | PlayerWindowEvent::NextPressed
+                        | PlayerWindowEvent::PreviousPressed => {}
                     },
                     Err(e) => log::debug!(
                         "Could not deserialize playlistWindow event: '{:?}' ({e:?}) - ignoring",
@@ -163,6 +224,7 @@ pub fn run() {
                     ),
                 }
             });
+            register_media_shortcuts(&app_handle);
             tauri::async_runtime::spawn(async move {
                 if let Err(e) = start_app(&app_handle).await {
                     log::error!("Failed to start ({e:?})");
